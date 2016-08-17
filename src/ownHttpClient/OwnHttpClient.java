@@ -123,14 +123,7 @@ public class OwnHttpClient implements Serializable {
             Conexion.setRequestMethod("GET");
         }
 
-        BufferedReader rd = new BufferedReader(new InputStreamReader(Conexion.getInputStream()));
-        String linea;
-
-        while ((linea = rd.readLine()) != null) {
-            this.Response += linea + "\n";
-        }
-        
-        rd.close();
+        boolean isUtf8 = true;
 
         for (int i = 0; i < Conexion.getHeaderFields().size(); i++) {
 
@@ -142,7 +135,27 @@ public class OwnHttpClient implements Serializable {
 
             }
 
+            if ("Content-Type".equals(Conexion.getHeaderFieldKey(i))) {
+                if (Conexion.getHeaderField(i).contains("ISO")) {
+                    isUtf8 = false;
+                }
+            }
+
         }
+
+        BufferedReader rd;
+        if (isUtf8) {
+            rd = new BufferedReader(new InputStreamReader(Conexion.getInputStream()));
+        } else {
+            rd = new BufferedReader(new InputStreamReader(Conexion.getInputStream(), "ISO-8859-1"));
+        }
+        String linea;
+
+        while ((linea = rd.readLine()) != null) {
+            this.Response += linea + "\n";
+        }
+
+        rd.close();
 
         if (Lugar != null && Lugar.contains("http")) {
             try {
